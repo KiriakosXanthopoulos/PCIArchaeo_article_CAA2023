@@ -1,0 +1,124 @@
+---
+title: "supp_PCIarchaeo_CAA_2023"
+author: "Kiriakos Xanthopoulos"
+date: "2024-05-08"
+output: html_document
+---
+# IMPORTING DATASET ----
+Sys.setlocale(category = "LC_ALL", locale = "Greek") #for reading greek characters in spreadsheets
+## Import dataset in form of spreadsheet tab delimited
+install.packages(c("readxl","tidyverse","gtsummary","writexl"))
+require(readxl)
+require(tidyverse)
+require(gtsummary)
+require(writexl)
+## Δελτίο Καταγραφής ----
+Δελτίο_Καταγραφής <- read_excel("C:/Users/kirix/Dropbox/APOIKIA/osteor/exported osteodata tables/Δελτίο Καταγραφής.xlsx")
+tbl_summary(Δελτίο_Καταγραφής, by = "Προέλευση")
+## Αρχαιολογική Τεκμηρίωση ----
+Αρχαιολογική_Τεκμηρίωση <- read_excel("C:/Users/kirix/Dropbox/APOIKIA/osteor/exported osteodata tables/Αρχαιολογική Τεκμηρίωση.xlsx")
+tbl_summary(Αρχαιολογική_Τεκμηρίωση)
+## Δελτίο Συντήρησης ----
+Δελτίο_Συντήρησης <- read_excel("C:/Users/kirix/Dropbox/APOIKIA/osteor/exported osteodata tables/Δελτίο Συντήρησης.xlsx")
+tbl_summary(Δελτίο_Συντήρησης)
+## Inventory Recording Form ----
+Inventory_Recording_Form <- read_excel("C:/Users/kirix/Dropbox/APOIKIA/osteor/exported osteodata tables/Inventory Recording Form.xlsx")
+tbl_summary(Inventory_Recording_Form)
+## Age Estimation ----
+Age_Estimation <- read_excel("C:/Users/kirix/Dropbox/APOIKIA/osteor/exported osteodata tables/1_DEMOGRAPHY/Age Estimation.xlsx")
+tbl_summary(Age_Estimation)
+## Sex Determination ----
+Sex_Determination <- read_excel("C:/Users/kirix/Dropbox/APOIKIA/osteor/exported osteodata tables/1_DEMOGRAPHY/Sex Determination.xlsx")
+tbl_summary(Sex_Determination)
+## Metrics Postcranial ----
+Metrics_postcra <- read_excel("C:/Users/kirix/Dropbox/APOIKIA/osteor/exported osteodata tables/2_OSTEOMETRY/Adult Postcranial Measurements.xlsx")
+tbl_summary(Metrics_postcra)
+## Metrics Cranial ----
+Metrics_cra <- read_excel("C:/Users/kirix/Dropbox/APOIKIA/osteor/exported osteodata tables/2_OSTEOMETRY/Adult Cranial Measurements.xlsx")
+tbl_summary(Metrics_cra)
+## Non Dental Pathology ----
+NON_DENTAL <- read_excel("C:/Users/kirix/Dropbox/APOIKIA/osteor/exported osteodata tables/3_NON DENTAL PATHOLOGY/Non Dental Pathologies.xlsx")
+tbl_summary(NON_DENTAL)
+## Juvenile Dental Pathology ----
+DENTAL_juve <- read_excel("C:/Users/kirix/Dropbox/APOIKIA/osteor/exported osteodata tables/4_JUVENILE DENTAL PATHOLOGY/Juvenile Dental Pathologies.xlsx")
+tbl_summary(DENTAL_juve)
+## Dental Pathology ----
+DENTAL_adult <- read_excel("C:/Users/kirix/Dropbox/APOIKIA/osteor/exported osteodata tables/5_DENTAL PATHOLOGY/Dental Pathologies.xlsx")
+tbl_summary(DENTAL_adult)
+## OsteoArthritis ----
+LIPP <- read_excel("C:/Users/kirix/Dropbox/APOIKIA/osteor/exported osteodata tables/6_OA/OA_LIPPING.xlsx")
+tbl_summary(LIPP)
+POR <- read_excel("C:/Users/kirix/Dropbox/APOIKIA/osteor/exported osteodata tables/6_OA/OA_POROSITY.xlsx")
+tbl_summary(POR)
+OPH <- read_excel("C:/Users/kirix/Dropbox/APOIKIA/osteor/exported osteodata tables/6_OA/OA_OSTEOPHYTES.xlsx")
+tbl_summary(OPH)
+EBU <- read_excel("C:/Users/kirix/Dropbox/APOIKIA/osteor/exported osteodata tables/6_OA/OA_EBURNATION.xlsx")
+tbl_summary(EBU)
+## Join tables OSTEODATA ----
+### Creating a list of dataframes (tables etc) ----
+osteodata_list_of_tables <- list(Δελτίο_Καταγραφής, Αρχαιολογική_Τεκμηρίωση, Age_Estimation, Sex_Determination, Metrics_postcra, Metrics_cra, NON_DENTAL, DENTAL_juve, DENTAL_adult, LIPP, POR, OPH, EBU) # add Δελτίο_Συντήρησης, Inventory_Recording_Form when it is deemed relevant
+### TIDYVERSE join ----
+install.packages("tidyverse")
+require(tidyverse)
+require(writexl)
+require(gtsummary)
+osteodata_all_joined <- osteodata_list_of_tables %>% reduce(full_join, by='ID')
+
+View(osteodata_all_joined)
+tbl_summary(osteodata_all_joined)
+tbl_summary(osteodata_all_joined, by = 'Age Group') #### needs tinkering
+
+### remove unneccessary variables (by selecting column number) ----
+osteodata_all_joined_without_unnecessary_columns <- subset(osteodata_all_joined, select = -c(2:3,5,10,12:34,37:40,44:46,51,78:91,94,102:105,108,115:137,140:150,151:153,156:165,170:172,179:187,192,197:200,201:204,207:223,226:250,251:258,286:300,301:304,306:383,406:408,585:587,792:794,969:971,1146:1148,1323:1325) ) #add the rest of the unnecessary columns
+View(osteodata_all_joined_without_unnecessary_columns)
+
+### write the final spreadsheet for all records and variables ----
+writexl::write_xlsx(osteodata_all_joined_without_unnecessary_columns, "C:/Users/kirix/Dropbox/APOIKIA/osteor/exported osteodata tables/osteodata_all_joined_without_unnecessary_columns.xlsx")
+# PLOTs
+##Age Estimation ----
+library(ggplot2)
+### Cohort ----
+Age_Estimation %>%
+  filter(!is.na(`Cohort`))%>%
+  ggplot(aes(x = fct_relevel(`Cohort`, c("b-1","2-5","6-10","11-15","16-20","21-25","26-30","31-35","36-40","41-45","46-50","51-55","56-60","60+")), 
+             y = prop.table(stat(count)), 
+             label = scales::percent(prop.table(after_stat(count))))) +
+  geom_bar(position = "dodge") + 
+  geom_text(stat = 'count',
+            position = position_dodge(0.9), 
+            vjust = -0.5, 
+            size = 4) + 
+  scale_x_discrete(labels=c('0-1 έτος', '2-5 ετών', '6-10', '11-15', '16-20', '21-25','26-30','31-35','36-40','41-45','46-50','51-55','56-60','60+')) +
+  theme(axis.text.x = element_text(size =11)) +
+  scale_y_continuous(labels = scales::percent) + 
+  labs(x = 'Ηλικιακές κοόρτες (ανα 5 έτης πλην των κοόρτων "0-1 έτος" και "2-5 ετών")', y = 'Ποσοστό')
+### Age Groups ----
+Age_Estimation %>%
+  filter(!is.na(`Age Group`))%>%
+ggplot(aes(x = fct_relevel(`Age Group`, c("Fetal (<birth)","Infant (b-3)","Child (3-12)","Adolescent (12-20)","Young Adult (20-35)","Midle Adult (35-50)","Old Adult (50+)")), 
+                          y = prop.table(stat(count)), 
+                          label = scales::percent(prop.table(after_stat(count))))) +
+  geom_bar(position = "dodge") + 
+  geom_text(stat = 'count',
+            position = position_dodge(0.9), 
+            vjust = -0.5, 
+            size = 4) + 
+  scale_x_discrete(labels=c('Νεογνά (γέννηση)', 'Νήπια (0-3)', 'Παιδιά (3-12)', 'Έφηβοι (12-20)', 'Νεαροί Ενήλικοι (20-35)', 'Μέσοι Ενήλικοι(35-50)','Ώριμοι Ενήλικοι(50+)')) +
+  theme(axis.text.x = element_text(size =11)) +
+  scale_y_continuous(labels = scales::percent) + 
+  labs(x = 'Ηλικιακές ομάδες', y = 'Ποσοστό')
+### Raw Estimation ----
+Age_Estimation %>%
+  filter(!is.na(`Raw Estimation`))%>%
+  ggplot(aes(x = fct_relevel(`Raw Estimation`, c("Subadult","Adult")), 
+             y = prop.table(stat(count)), 
+             label = scales::percent(prop.table(after_stat(count))))) +
+  geom_bar(position = "dodge") + 
+  geom_text(stat = 'count',
+            position = position_dodge(0.9), 
+            vjust = -0.5, 
+            size = 4) + 
+  scale_x_discrete(labels=c('Ανήλικοι', 'Ενήλικοι')) +
+  theme(axis.text.x = element_text(size =11)) +
+  scale_y_continuous(labels = scales::percent) + 
+  labs(x = 'Ευρεία Εκτίμηση Ηλικιας', y = 'Ποσοστό')
